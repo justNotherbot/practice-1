@@ -68,10 +68,14 @@ int main(int argc, char** argv) {
 
   int mskl[26];
   int msku[26];
+  int crl[26];
+  int cru[26];
   for(int i = 0; i < 26; i++)
   {
     mskl[i] = 0;
     msku[i] = 0;
+    crl[i] = 0;
+    cru[i] = 0;
   }
     
   updmsk(word_param, mskl, msku);
@@ -88,10 +92,26 @@ int main(int argc, char** argv) {
   int ans = 0;
   bool onw = 0;
   bool crw = 0;
+
   while ((cr[0] = std::fgetc(fp)) != EOF)  // Standard C I/O file reading loop
   {
+    if(issmol(cr[0]))
+    {
+      crl[cr[0]-'a'] = 1;
+    }
+    else if(isbig(cr[0]))
+    {
+      cru[cr[0]-'A'] = 1;
+    }
     if(!iscompat(cr[0]))
     {
+      for(int i = 0; i < 26; i++)
+      {
+        if(msku[i] != cru[i] || crl[i] != mskl[i])
+          crw = 0;
+        cru[i] = 0;
+        crl[i] = 0;
+      }
       ans += crw;
       crw = 0;
       onw = 0;
