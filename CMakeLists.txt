@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
-project(neatcounter LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.31)
 
-set(CMAKE_CXX_VERSION 23)
+project(Prac1)
 
-add_executable(${PROJECT} main.cpp)
+add_compile_options(-g -std=c++20 -Wall)
+add_executable(practice_1 main.cpp)
