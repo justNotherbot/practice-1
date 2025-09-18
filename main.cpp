@@ -12,15 +12,41 @@ bool issmol(char c)
   return c >= 'a' && c <= 'z';
 }
 
-void updmsk(char *warg, int *msk)
+bool isbig(char c)
+{
+  return c >= 'A' && c <= 'Z';
+}
+
+bool isdig(char c)
+{
+  return c >= '0' && c <= '9';
+}
+
+bool iscompat(char c)
+{
+  return isdig(c) || issmol(c) || isbig(c);
+}
+
+void updmsk(char *warg, int *mskl, int *msku)
 {
   int i = 0;
   while(warg[i] != '\0')
   {
     if(issmol(warg[i]))
-      msk[warg[i]-'a'] = 1;
+      mskl[warg[i]-'a'] = 1;
+    else if(isbig(warg[i]))
+      msku[warg[i]-'A'] = 1;
     i++;
   }
+}
+
+bool inmsk(char c, int *mskl, int *msku)
+{
+  if(issmol(c))
+    return mskl[c-'a'];
+  if(isbig(c))
+    return msku[c-'A'];
+  return 0;
 }
 
 int main(int argc, char** argv) {
@@ -40,10 +66,15 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  int msk[26];
+  int mskl[26];
+  int msku[26];
   for(int i = 0; i < 26; i++)
-    msk[i] = 0;
-  updmsk(word_param, msk);
+  {
+    mskl[i] = 0;
+    msku[i] = 0;
+  }
+    
+  updmsk(word_param, mskl, msku);
 
   int is_ok = EXIT_FAILURE;
   FILE* fp = std::fopen(file_param, "r");
@@ -52,7 +83,6 @@ int main(int argc, char** argv) {
     return is_ok;
   }
 
-  char c;  // Note: int, not char, required to handle EOF
   char cr[2];
   cr[1] = '\0';
   int ans = 0;
@@ -60,7 +90,7 @@ int main(int argc, char** argv) {
   bool crw = 0;
   while ((cr[0] = std::fgetc(fp)) != EOF)  // Standard C I/O file reading loop
   {
-    if(!issmol(cr[0]))
+    if(!iscompat(cr[0]))
     {
       ans += crw;
       crw = 0;
@@ -71,12 +101,13 @@ int main(int argc, char** argv) {
       if(!onw)
       {
         onw = 1;
-        if(msk[cr[0]-'a'])
+        
+        if(inmsk(cr[0], mskl, msku))
         {
           crw = 1;
         }
       }
-      else if(!msk[cr[0]-'a'])
+      else if(!inmsk(cr[0], mskl, msku))
       {
         crw = 0;
       }
