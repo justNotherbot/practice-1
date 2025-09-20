@@ -1,6 +1,5 @@
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 #include <cstring>
 
 const char* INVARG = "Invalid argument format\n";
@@ -27,25 +26,25 @@ bool iscompat(char c)
   return isdig(c) || issmol(c) || isbig(c);
 }
 
-void updmsk(char *warg, int *mskl, int *msku)
+void updmsk(char *warg, int *msk)
 {
   int i = 0;
   while(warg[i] != '\0')
   {
     if(issmol(warg[i]))
-      mskl[warg[i]-'a'] = 1;
+      msk[warg[i]-'a'] = 1;
     else if(isbig(warg[i]))
-      msku[warg[i]-'A'] = 1;
+      msk[warg[i]-'A'] = 1;
     i++;
   }
 }
 
-bool inmsk(char c, int *mskl, int *msku)
+bool inmsk(char c, int *msk)
 {
   if(issmol(c))
-    return mskl[c-'a'];
+    return msk[c-'a'];
   if(isbig(c))
-    return msku[c-'A'];
+    return msk[c-'A'];
   return 0;
 }
 
@@ -66,19 +65,15 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  int mskl[26];
-  int msku[26];
-  int crl[26];
-  int cru[26];
+  int msk[26];
+  int crmsk[26];
   for(int i = 0; i < 26; i++)
   {
-    mskl[i] = 0;
-    msku[i] = 0;
-    crl[i] = 0;
-    cru[i] = 0;
+    msk[i] = 0;
+    crmsk[i] = 0;
   }
     
-  updmsk(word_param, mskl, msku);
+  updmsk(word_param, msk);
 
   int is_ok = EXIT_FAILURE;
   FILE* fp = std::fopen(file_param, "r");
@@ -93,24 +88,29 @@ int main(int argc, char** argv) {
   bool onw = 0;
   bool crw = 0;
 
-  while ((cr[0] = std::fgetc(fp)) != EOF)  // Standard C I/O file reading loop
+
+  while (1)
   {
+    cr[0] = std::fgetc(fp);
     if(issmol(cr[0]))
     {
-      crl[cr[0]-'a'] = 1;
+      crmsk[cr[0]-'a'] = 1;
     }
     else if(isbig(cr[0]))
     {
-      cru[cr[0]-'A'] = 1;
+      crmsk[cr[0]-'A'] = 1;
     }
+    
     if(!iscompat(cr[0]))
     {
       for(int i = 0; i < 26; i++)
       {
-        if(msku[i] != cru[i] || crl[i] != mskl[i])
+        if(msk[i] == 1 && crmsk[i] == 0)
+        {
+          
           crw = 0;
-        cru[i] = 0;
-        crl[i] = 0;
+        }
+        crmsk[i] = 0;
       }
       ans += crw;
       crw = 0;
@@ -122,16 +122,14 @@ int main(int argc, char** argv) {
       {
         onw = 1;
         
-        if(inmsk(cr[0], mskl, msku))
+        if(inmsk(cr[0], msk))
         {
           crw = 1;
         }
       }
-      else if(!inmsk(cr[0], mskl, msku))
-      {
-        crw = 0;
-      }
     }
+    if(cr[0] == EOF)
+      break;
   }
 
   if (std::ferror(fp))
