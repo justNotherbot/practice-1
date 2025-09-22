@@ -25,13 +25,13 @@ bool IsWordSymbol(char c) {
   return IsDigit(c) || IsLower(c) || IsUpper(c); 
 }
 
-void UpdateMask(char* warg, int* mask) {
+void UpdateMask(char* filter_word, int* mask) {
   int i = 0;
-  while (warg[i] != '\0') {
-    if (IsLower(warg[i]))
-      mask[warg[i] - 'a'] = 1;
-    else if (IsUpper(warg[i]))
-      mask[warg[i] - 'A'] = 1;
+  while (filter_word[i] != '\0') {
+    if (IsLower(filter_word[i]))
+      mask[filter_word[i] - 'a'] = 1;
+    else if (IsUpper(filter_word[i]))
+      mask[filter_word[i] - 'A'] = 1;
     i++;
   }
 }
