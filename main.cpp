@@ -1,149 +1,129 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 
-const char* INVARG = "Invalid argument format\n";
-const char* FFLAG = "--file";
-const char *WFLAG = "--word";
+const char* kInvArg = "Invalid argument format";
+const char* kFileSign = "--file";
+const char* kWordSign = "--word";
+constexpr int kAlphSize = 26;
+constexpr int kReqArgc = 5;
 
-bool issmol(char c)
-{
-  return c >= 'a' && c <= 'z';
+bool IsLower(char c) {
+  return c >= 'a' && c <= 'z'; 
 }
 
-bool isbig(char c)
-{
-  return c >= 'A' && c <= 'Z';
+bool IsUpper(char c) { 
+  return c >= 'A' && c <= 'Z'; 
 }
 
-bool isdig(char c)
-{
-  return c >= '0' && c <= '9';
+bool IsDigit(char c) { 
+  return c >= '0' && c <= '9'; 
 }
 
-bool iscompat(char c)
-{
-  return isdig(c) || issmol(c) || isbig(c);
+bool IsWordSymbol(char c) { 
+  return IsDigit(c) || IsLower(c) || IsUpper(c); 
 }
 
-void updmsk(char *warg, int *msk)
-{
+void UpdateMask(char* warg, int* mask) {
   int i = 0;
-  while(warg[i] != '\0')
-  {
-    if(issmol(warg[i]))
-      msk[warg[i]-'a'] = 1;
-    else if(isbig(warg[i]))
-      msk[warg[i]-'A'] = 1;
+  while (warg[i] != '\0') {
+    if (IsLower(warg[i]))
+      mask[warg[i] - 'a'] = 1;
+    else if (IsUpper(warg[i]))
+      mask[warg[i] - 'A'] = 1;
     i++;
   }
 }
 
-bool inmsk(char c, int *msk)
-{
-  if(issmol(c))
-    return msk[c-'a'];
-  if(isbig(c))
-    return msk[c-'A'];
+bool CheckInMask(char c, int* mask) {
+  if (IsLower(c)) {
+    return mask[c - 'a'];
+  }
+  if (IsUpper(c)) {
+    return mask[c - 'A'];
+  }
   return 0;
+}
+
+void ParseCmdParams(int argc, char** argv, char** word_param_ptr, char** file_param_ptr){
+  assert(argc == kReqArgc);
+  if (!strcmp(argv[1], kFileSign) && !strcmp(argv[3], kWordSign)) {
+    *file_param_ptr = argv[2];
+    *word_param_ptr = argv[4];
+  } 
+  else if (!strcmp(argv[3], kFileSign) && !strcmp(argv[1], kWordSign)) {
+    *file_param_ptr = argv[4];
+    *word_param_ptr = argv[2];
+  }
 }
 
 int main(int argc, char** argv) {
   char* word_param = nullptr;
   char* file_param = nullptr;
-  if (argc != 5) {
-    puts(INVARG);
-    return 0;
-  } else if (!strcmp(argv[1], FFLAG) && !strcmp(argv[3], WFLAG)) {
-    file_param = argv[2];
-    word_param = argv[4];
-  } else if (!strcmp(argv[3], FFLAG) && !strcmp(argv[1], WFLAG)) {
-    file_param = argv[4];
-    word_param = argv[2];
-  } else {
-    puts(INVARG);
-    return 0;
+  if (argc != kReqArgc) {
+    puts(kInvArg);
+    return 1;
+  } 
+  else {
+    ParseCmdParams(argc, argv, &word_param, &file_param);
+  }
+  if(word_param == nullptr || file_param == nullptr) {
+    puts(kInvArg);
+    return 1;
   }
 
-  int msk[26];
-  int crmsk[26];
-  for(int i = 0; i < 26; i++)
-  {
-    msk[i] = 0;
-    crmsk[i] = 0;
-  }
-    
-  updmsk(word_param, msk);
-
-  int is_ok = EXIT_FAILURE;
-  FILE* fp = std::fopen(file_param, "r");
-  if (!fp) {
-    std::perror("File opening failed");
-    return is_ok;
+  int mask[kAlphSize];
+  int curr_mask[kAlphSize];
+  for (int i = 0; i < kAlphSize; i++) {
+    mask[i] = 0;
+    curr_mask[i] = 0;
   }
 
-  char cr[2];
-  cr[1] = '\0';
-  int ans = 0;
-  bool onw = 0;
-  bool crw = 0;
+  UpdateMask(word_param, mask);
 
+  int file_status = EXIT_FAILURE;
+  FILE* file_stream = fopen(file_param, "r");
+  if (!file_stream) {
+    perror("File opening failed");
+    return file_status;
+  }
 
-  while (1)
-  {
-    cr[0] = std::fgetc(fp);
-    if(issmol(cr[0]))
-    {
-      crmsk[cr[0]-'a'] = 1;
-    }
-    else if(isbig(cr[0]))
-    {
-      crmsk[cr[0]-'A'] = 1;
-    }
-    
-    if(!iscompat(cr[0]))
-    {
-      for(int i = 0; i < 26; i++)
-      {
-        if(msk[i] == 1 && crmsk[i] == 0)
-        {
-          
-          crw = 0;
+  char curr_symbol[2];
+  curr_symbol[1] = '\0';
+  int n_suit_words = 0;
+  while (true) {
+    curr_symbol[0] = fgetc(file_stream);
+
+    if (!IsWordSymbol(curr_symbol[0])) {
+      bool curr_word_ok = true;
+      for (int i = 0; i < kAlphSize; i++) {
+        if (mask[i] == 1 && curr_mask[i] == 0) {
+          curr_word_ok = false;
         }
-        crmsk[i] = 0;
+        curr_mask[i] = 0;
       }
-      ans += crw;
-      crw = 0;
-      onw = 0;
-    }
-    else
-    {
-      if(!onw)
-      {
-        onw = 1;
-        
-        if(inmsk(cr[0], msk))
-        {
-          crw = 1;
-        }
+      n_suit_words += curr_word_ok;
+    } 
+    else {
+      if (IsLower(curr_symbol[0])) {
+        curr_mask[curr_symbol[0] - 'a'] = 1;
+      } 
+      else if (IsUpper(curr_symbol[0])) {
+        curr_mask[curr_symbol[0] - 'A'] = 1;
       }
     }
-    if(cr[0] == EOF)
+    if (curr_symbol[0] == EOF) {
       break;
+    }
   }
-
-  if (std::ferror(fp))
-  {
-    std::puts("I/O error when reading");
+  if (ferror(file_stream)) {
+    puts("I/O error when reading");
+  } 
+  else if (feof(file_stream)) {
+    printf("Word count is %d\n", n_suit_words);
   }
-  else if (std::feof(fp)) {
-    printf("Word count is %d\n", ans);
-  }
-    
-  
-  
-
-  std::fclose(fp);
+  fclose(file_stream);
 
   return 0;
 }
