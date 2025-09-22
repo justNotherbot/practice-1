@@ -28,10 +28,12 @@ bool IsWordSymbol(char c) {
 void UpdateMask(char* filter_word, int* mask) {
   int i = 0;
   while (filter_word[i] != '\0') {
-    if (IsLower(filter_word[i]))
+    if (IsLower(filter_word[i])) {
       mask[filter_word[i] - 'a'] = 1;
-    else if (IsUpper(filter_word[i]))
+    }
+    else if (IsUpper(filter_word[i])) {
       mask[filter_word[i] - 'A'] = 1;
+    }
     i++;
   }
 }
